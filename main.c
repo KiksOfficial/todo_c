@@ -8,11 +8,20 @@ int init_file();
 int print_contents();
 int handle_user_input(char *action, char *object);
 int delete_task(char *to_be_deleted);
+void combine_strings(int argc, char *argv[], char *dest, size_t dest_size);
 
 int main(int argc, char *argv[]) {
 
+  char dest[255];
+
+  if (argc < 2) {
+    print_contents();
+    return 0;
+  }
+
   init_file();
-  handle_user_input(argv[1], argv[2]);
+  combine_strings(argc, argv, dest, sizeof(dest));
+  handle_user_input(argv[1], dest);
   print_contents();
 
   return 0;
@@ -24,8 +33,8 @@ int add_task(char *filename, char *task) {
     return 1;
   }
 
-  fputs(task, fptr);
-  fputs("\n", fptr);
+  fprintf(fptr, "[ ]    %s\n", task);
+
   fclose(fptr);
 
   return 0;
@@ -70,7 +79,6 @@ int handle_user_input(char *action, char *object) {
     add_task(FILENAME, object);
     break;
   case 'p':
-    print_contents();
     break;
   case 'r':
     delete_task(object);
@@ -95,8 +103,7 @@ int delete_task(char *to_be_deleted) {
 
     line_buffer[strcspn(line_buffer, "\n")] = '\0';
     if (strcmp(line_buffer, to_be_deleted)) {
-      fputs(line_buffer, tmp);
-      fputs("\n", tmp);
+      fprintf(tmp, "%s\n", line_buffer);
     }
   }
 
@@ -108,4 +115,19 @@ int delete_task(char *to_be_deleted) {
   rename("tmp", FILENAME);
 
   return 0;
+}
+
+void combine_strings(int argc, char *argv[], char *dest, size_t dest_size) {
+
+  dest[0] = '\0';
+  for (int i = 2; i < argc; i++) {
+    size_t len = strlen(dest);
+    size_t remaining = dest_size - len - 1;
+
+    if (i < argc - 1) {
+      snprintf(dest + len, remaining + 1, "%s ", argv[i]);
+    } else {
+      snprintf(dest + len, remaining + 1, "%s", argv[i]);
+    }
+  }
 }
