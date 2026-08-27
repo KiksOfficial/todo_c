@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -7,7 +8,7 @@ int add_task(char *filename, char *task);
 int init_file();
 int print_contents();
 int handle_user_input(char *action, char *object);
-int delete_task(char *to_be_deleted);
+int delete_task(char to_be_deleted);
 void combine_strings(int argc, char *argv[], char *dest, size_t dest_size);
 
 int main(int argc, char *argv[]) {
@@ -28,12 +29,20 @@ int main(int argc, char *argv[]) {
 }
 
 int add_task(char *filename, char *task) {
-  FILE *fptr = fopen(filename, "a");
+
+  size_t id = 1;
+  char line[1024];
+
+  FILE *fptr = fopen(filename, "a+");
   if (fptr == NULL) {
     return 1;
   }
 
-  fprintf(fptr, "[ ]    %s\n", task);
+  while (fgets(line, sizeof(line), fptr) != NULL) {
+    id++;
+  }
+
+  fprintf(fptr, "%zu    [ ] %s\n", id, task);
 
   fclose(fptr);
 
@@ -81,7 +90,7 @@ int handle_user_input(char *action, char *object) {
   case 'p':
     break;
   case 'r':
-    delete_task(object);
+    delete_task(object[0]);
     break;
   default:
     printf("No such option\n");
@@ -89,9 +98,11 @@ int handle_user_input(char *action, char *object) {
   return 0;
 }
 
-int delete_task(char *to_be_deleted) {
+int delete_task(char to_be_deleted) {
 
   char line_buffer[1024];
+  size_t new_id = 1;
+
   FILE *fptr = fopen(FILENAME, "r");
   FILE *tmp = fopen("tmp", "w");
 
@@ -101,9 +112,12 @@ int delete_task(char *to_be_deleted) {
 
   while (fgets(line_buffer, sizeof(line_buffer), fptr) != NULL) {
 
+    char old_id = line_buffer[0];
+
     line_buffer[strcspn(line_buffer, "\n")] = '\0';
-    if (strcmp(line_buffer, to_be_deleted)) {
-      fprintf(tmp, "%s\n", line_buffer);
+    if (old_id != to_be_deleted) {
+      fprintf(tmp, "%zu %s\n", new_id, strchr(line_buffer, ' '));
+      new_id++;
     }
   }
 
