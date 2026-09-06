@@ -10,6 +10,7 @@ int print_contents();
 int handle_user_input(char *action, char *object);
 int delete_task(char to_be_deleted);
 void combine_strings(int argc, char *argv[], char *dest, size_t dest_size);
+int change_task_status(char task_id);
 
 int main(int argc, char *argv[]) {
 
@@ -84,6 +85,9 @@ int print_contents() {
 
 int handle_user_input(char *action, char *object) {
   switch (action[0]) {
+  case 'm':
+    change_task_status(*object);
+    break;
   case 'a':
     add_task(FILENAME, object);
     break;
@@ -144,4 +148,49 @@ void combine_strings(int argc, char *argv[], char *dest, size_t dest_size) {
       snprintf(dest + len, remaining + 1, "%s", argv[i]);
     }
   }
+}
+
+int change_task_status(char task_id) {
+
+  FILE *fptr = fopen(FILENAME, "r");
+  FILE *tmp = fopen("tmp", "w");
+
+  if (fptr == NULL || tmp == NULL) {
+    return 1;
+  }
+
+  char line_buffer[1024];
+
+  while (fgets(line_buffer, sizeof(line_buffer), fptr) != NULL) {
+    char id = line_buffer[0];
+
+    line_buffer[strcspn(line_buffer, "\n")] = '\0';
+    if (id == task_id) {
+      char *brackets = strstr(line_buffer, "[ ]");
+
+      if (brackets != NULL) {
+        brackets[1] = 'X';
+      } else {
+        brackets = strstr(line_buffer, "[X]");
+        if (brackets == NULL) {
+          brackets = strstr(line_buffer, "[x]");
+        }
+
+        if (brackets != NULL) {
+          brackets[1] = ' ';
+        }
+      }
+    }
+
+    fprintf(tmp, "%s\n", line_buffer);
+  }
+
+  fclose(tmp);
+  fclose(fptr);
+
+  remove(FILENAME);
+
+  rename("tmp", FILENAME);
+
+  return 0;
 }
