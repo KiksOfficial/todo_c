@@ -11,7 +11,7 @@ int print_contents();
 int handle_user_input(char *action, char *object);
 int delete_task(size_t to_be_deleted);
 void combine_strings(int argc, char *argv[], char *dest, size_t dest_size);
-int change_task_status(char task_id);
+int change_task_status(size_t task_id);
 int clear_file();
 
 int main(int argc, char *argv[]) {
@@ -89,7 +89,7 @@ int print_contents() {
 int handle_user_input(char *action, char *object) {
   switch (action[0]) {
   case 'm':
-    change_task_status(*object);
+    change_task_status(strtoul(object, NULL, 10));
     break;
   case 'a':
     add_task(FILENAME, object);
@@ -156,7 +156,7 @@ void combine_strings(int argc, char *argv[], char *dest, size_t dest_size) {
   }
 }
 
-int change_task_status(char task_id) {
+int change_task_status(size_t task_id) {
 
   FILE *fptr = fopen(FILENAME, "r");
   FILE *tmp = fopen("tmp", "w");
@@ -168,7 +168,7 @@ int change_task_status(char task_id) {
   char line_buffer[1024];
 
   while (fgets(line_buffer, sizeof(line_buffer), fptr) != NULL) {
-    char id = line_buffer[0];
+    size_t id = strtoul(line_buffer, NULL, 10);
 
     line_buffer[strcspn(line_buffer, "\n")] = '\0';
     if (id == task_id) {
