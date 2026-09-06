@@ -1,5 +1,6 @@
 #include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define FILENAME "todo.txt"
@@ -8,9 +9,10 @@ int add_task(char *filename, char *task);
 int init_file();
 int print_contents();
 int handle_user_input(char *action, char *object);
-int delete_task(char to_be_deleted);
+int delete_task(size_t to_be_deleted);
 void combine_strings(int argc, char *argv[], char *dest, size_t dest_size);
 int change_task_status(char task_id);
+int clear_file();
 
 int main(int argc, char *argv[]) {
 
@@ -72,6 +74,7 @@ int print_contents() {
 
   if (fptr2 == NULL) {
     printf("Failed to open todo.txt\n");
+    return 1;
   }
 
   while (fgets(line_buffer, sizeof(line_buffer), fptr2)) {
@@ -94,7 +97,10 @@ int handle_user_input(char *action, char *object) {
   case 'p':
     break;
   case 'r':
-    delete_task(object[0]);
+    delete_task(strtoul(object, NULL, 10));
+    break;
+  case 'c':
+    clear_file();
     break;
   default:
     printf("No such option\n");
@@ -102,7 +108,7 @@ int handle_user_input(char *action, char *object) {
   return 0;
 }
 
-int delete_task(char to_be_deleted) {
+int delete_task(size_t to_be_deleted) {
 
   char line_buffer[1024];
   size_t new_id = 1;
@@ -116,7 +122,7 @@ int delete_task(char to_be_deleted) {
 
   while (fgets(line_buffer, sizeof(line_buffer), fptr) != NULL) {
 
-    char old_id = line_buffer[0];
+    size_t old_id = strtoul(line_buffer, NULL, 10);
 
     line_buffer[strcspn(line_buffer, "\n")] = '\0';
     if (old_id != to_be_deleted) {
@@ -128,9 +134,9 @@ int delete_task(char to_be_deleted) {
   fclose(fptr);
   fclose(tmp);
 
-  remove(FILENAME);
-
-  rename("tmp", FILENAME);
+  if (remove(FILENAME) != 0 || rename("tmp", FILENAME) != 0) {
+    return 1;
+  }
 
   return 0;
 }
@@ -192,5 +198,15 @@ int change_task_status(char task_id) {
 
   rename("tmp", FILENAME);
 
+  return 0;
+}
+
+int clear_file() {
+  const char *fptr = "todo.txt";
+  if (remove(fptr) != 0) {
+    printf("Error");
+    return 1;
+  };
+  init_file();
   return 0;
 }
